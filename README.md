@@ -11,6 +11,11 @@ Want the same look elsewhere? Try [Obsidian Jarvis HUD](https://github.com/andyj
 | Background | File | What it is |
 |---|---|---|
 | Calm Jarvis | `wallpapers/jarvis-calm.html` | The Jarvis hologram, slow and quiet, with the occasional thought |
+| Ultrawide Jarvis | `wallpapers/jarvis-21x9.html` | For 21:9 ultrawide screens, such as 2560 × 1080, 3440 × 1440, 3840 × 1600 and 5120 × 2160. A calm Jarvis in the middle and quiet HUD panels on the sides with telemetry, meters, a clock with date and week number, a radar sweep and a waveform |
+
+![Ultrawide Jarvis wallpaper](screenshots/jarvis-21x9.png)
+
+The ultrawide layout scales with the screen size, so it fits any 21:9 resolution. The telemetry and readings in its panels are decoration. The clock is real.
 
 Each background is a single HTML file with no dependencies and nothing loaded from the internet.
 
@@ -30,11 +35,21 @@ macOS has no built-in way to use your own moving wallpaper, so it needs an app t
 
 Add settings to the end of the address, for example `jarvis-calm.html?x=72&size=70`. All are optional.
 
+Calm Jarvis:
+
 | Setting | Default | What it does |
 |---|---|---|
 | `x`, `y` | `50` | Where Jarvis sits, in percent of the screen. `x=72` moves it to the right, clear of your windows |
 | `size` | `62` | How big, in percent of the screen height |
 | `fps` | `30` | Frame rate cap. Lower saves power, `20` still looks smooth |
+
+Ultrawide Jarvis:
+
+| Setting | Default | What it does |
+|---|---|---|
+| `size` | `66` | How big Jarvis is, in percent of the screen height |
+| `panels` | `1` | `panels=0` hides the side panels and keeps only Jarvis |
+| `fps` | `30` | Frame rate cap. Lower saves power |
 
 The background draws continuously, so it uses some GPU and battery. With **Reduce motion** turned on in macOS it shows a still frame instead.
 

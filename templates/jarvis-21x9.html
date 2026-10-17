@@ -1,0 +1,501 @@
+<!doctype html>
+<!--
+  Jarvis desktop wallpaper for 21:9 ultrawide screens. Generated from
+  templates/jarvis-21x9.html by build.mjs, edit the template, or the
+  engine in obsidian-jarvis-hud, not this file.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jarvis 21:9</title>
+<style>
+  :root {
+    --bg: #05090d;
+    --cyan: #00d8ff;
+    --cyan-rgb: 0, 216, 255;
+    --soft: #7deeff;
+    --dim: rgba(125, 238, 255, 0.45);
+    --line: rgba(0, 216, 255, 0.22);
+    --label: "Avenir Next Condensed", "DIN Condensed", "Helvetica Neue", sans-serif;
+    --data: "SF Mono", Menlo, monospace;
+    /* Everything is sized from the screen height, so it scales with any screen */
+    --u: 1vh;
+  }
+  html, body {
+    margin: 0;
+    height: 100%;
+    overflow: hidden;
+    background: var(--bg);
+    color: var(--soft);
+  }
+  /* The same faint HUD grid and top glow as the Obsidian theme, plus a
+     vignette so the edges fall away into the dark */
+  body {
+    background-image:
+      radial-gradient(ellipse 60% 50% at 50% -10%, rgba(var(--cyan-rgb), 0.07), transparent 70%),
+      radial-gradient(ellipse 75% 95% at 50% 50%, transparent 45%, rgba(0, 0, 0, 0.6)),
+      linear-gradient(rgba(var(--cyan-rgb), 0.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(var(--cyan-rgb), 0.035) 1px, transparent 1px);
+    background-size: 100% 100%, 100% 100%, 44px 44px, 44px 44px;
+    font-family: var(--label);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+
+  /* ---------- Jarvis ---------- */
+  /* Absolute, not fixed: the engine skips drawing when the canvas has no
+     offsetParent, which a fixed element never has */
+  .jarvis-mind-wallpaper {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: var(--size);
+    height: var(--size);
+    translate: -50% -50%;
+    opacity: 0.85;
+  }
+  .aura {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: calc(var(--size) * 1.6);
+    aspect-ratio: 1;
+    translate: -50% -50%;
+    border-radius: 50%;
+    background: radial-gradient(closest-side, rgba(var(--cyan-rgb), 0.07), rgba(var(--cyan-rgb), 0.02) 60%, transparent);
+    pointer-events: none;
+  }
+
+  /* ---------- Panels ---------- */
+  .panel {
+    position: absolute;
+    top: 50%;
+    translate: 0 -50%;
+    width: calc(var(--u) * 34);
+    display: flex;
+    flex-direction: column;
+    gap: calc(var(--u) * 2.2);
+    opacity: 0.75;
+  }
+  #left { left: 4.5%; }
+  #right { right: 4.5%; }
+  .panel h3 {
+    margin: 0 0 calc(var(--u) * 0.9);
+    font-size: calc(var(--u) * 1.25);
+    font-weight: 600;
+    color: var(--dim);
+    border-bottom: 1px solid var(--line);
+    padding-bottom: calc(var(--u) * 0.5);
+  }
+  .panel h3::before {
+    content: "";
+    display: inline-block;
+    width: calc(var(--u) * 0.6);
+    height: calc(var(--u) * 0.6);
+    margin-right: calc(var(--u) * 0.8);
+    background: var(--cyan);
+    box-shadow: 0 0 6px var(--cyan);
+    vertical-align: middle;
+  }
+
+  /* Telemetry: lines scroll in at the top and fade out below */
+  .telemetry {
+    height: calc(var(--u) * 22);
+    overflow: hidden;
+    font-family: var(--data);
+    font-size: calc(var(--u) * 1.15);
+    line-height: 1.55;
+    letter-spacing: 0.06em;
+    text-transform: none;
+    color: var(--soft);
+    -webkit-mask-image: linear-gradient(#000 40%, transparent);
+    mask-image: linear-gradient(#000 40%, transparent);
+  }
+  .telemetry div { white-space: nowrap; }
+  .telemetry span { color: var(--dim); }
+
+  /* Meters: bars that rise and fall on their own uneven rhythms */
+  .meters {
+    display: flex;
+    align-items: flex-end;
+    gap: calc(var(--u) * 0.7);
+    height: calc(var(--u) * 7);
+  }
+  .meters i {
+    flex: 1;
+    height: 100%;
+    background: linear-gradient(to top, rgba(var(--cyan-rgb), 0.55), rgba(var(--cyan-rgb), 0.12));
+    transform-origin: bottom;
+    animation: meter var(--t) ease-in-out var(--d) infinite alternate;
+  }
+  @keyframes meter {
+    0% { transform: scaleY(0.15); }
+    35% { transform: scaleY(0.7); }
+    60% { transform: scaleY(0.35); }
+    100% { transform: scaleY(0.9); }
+  }
+
+  /* Clock */
+  .clock .time {
+    font-family: var(--data);
+    font-size: calc(var(--u) * 5);
+    letter-spacing: 0.04em;
+    color: var(--cyan);
+    text-shadow: 0 0 10px rgba(var(--cyan-rgb), 0.5);
+    line-height: 1;
+  }
+  .clock .date {
+    margin-top: calc(var(--u) * 0.8);
+    font-size: calc(var(--u) * 1.4);
+    color: var(--dim);
+  }
+
+  /* Radar: a sweep turning over rings, with blips that flare when it passes */
+  .scope {
+    display: flex;
+    gap: calc(var(--u) * 2.5);
+    align-items: center;
+  }
+  .radar {
+    position: relative;
+    flex: none;
+    width: calc(var(--u) * 13);
+    aspect-ratio: 1;
+    border-radius: 50%;
+    border: 1px solid var(--line);
+    background:
+      radial-gradient(circle, transparent 32%, var(--line) 32.5%, transparent 33.5%),
+      radial-gradient(circle, transparent 65%, var(--line) 65.5%, transparent 66.5%),
+      linear-gradient(var(--line), var(--line)) center / 1px 100% no-repeat,
+      linear-gradient(var(--line), var(--line)) center / 100% 1px no-repeat;
+    overflow: hidden;
+  }
+  .radar::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: conic-gradient(from 0deg, rgba(var(--cyan-rgb), 0.35), transparent 70deg);
+    animation: spin 6s linear infinite;
+  }
+  .radar i {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    margin: -2px;
+    border-radius: 50%;
+    background: var(--soft);
+    box-shadow: 0 0 6px var(--cyan);
+    opacity: 0;
+    animation: blip 6s linear var(--d) infinite;
+  }
+  @keyframes spin { to { rotate: 360deg; } }
+  @keyframes blip {
+    0%, 2% { opacity: 1; }
+    40%, 100% { opacity: 0; }
+  }
+  .waveform {
+    flex: 1;
+    height: calc(var(--u) * 9);
+  }
+  .waveform polyline {
+    fill: none;
+    stroke: var(--soft);
+    stroke-width: 1.2;
+    filter: drop-shadow(0 0 3px var(--cyan));
+  }
+
+  /* Status rows with a value on the right */
+  .rows div {
+    display: flex;
+    justify-content: space-between;
+    font-size: calc(var(--u) * 1.2);
+    color: var(--dim);
+    padding: calc(var(--u) * 0.35) 0;
+    border-bottom: 1px solid rgba(var(--cyan-rgb), 0.08);
+  }
+  .rows b {
+    font-family: var(--data);
+    font-weight: 400;
+    letter-spacing: 0.05em;
+    color: var(--soft);
+  }
+
+  /* ---------- Frame: header, footer, ruler and corners ---------- */
+  .bar {
+    position: absolute;
+    left: 4%;
+    right: 4%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: calc(var(--u) * 1.2);
+    color: var(--dim);
+    opacity: 0.8;
+  }
+  .bar.top { top: 3.2%; }
+  .bar.bottom { bottom: 3.2%; }
+  .bar .live::before {
+    content: "";
+    display: inline-block;
+    width: calc(var(--u) * 0.7);
+    height: calc(var(--u) * 0.7);
+    margin-right: calc(var(--u) * 0.9);
+    border-radius: 50%;
+    background: var(--cyan);
+    box-shadow: 0 0 6px var(--cyan);
+    vertical-align: middle;
+    animation: breathe 2.8s ease-in-out infinite;
+  }
+  @keyframes breathe {
+    50% { opacity: 0.45; }
+  }
+  .ruler {
+    position: absolute;
+    left: 4%;
+    right: 4%;
+    bottom: 6.5%;
+    height: calc(var(--u) * 1.2);
+    background:
+      repeating-linear-gradient(90deg, var(--line) 0 1px, transparent 1px 2.5%),
+      repeating-linear-gradient(90deg, rgba(var(--cyan-rgb), 0.12) 0 1px, transparent 1px 0.5%) bottom / 100% 40% no-repeat;
+    opacity: 0.8;
+  }
+  .ruler::after {
+    content: "";
+    position: absolute;
+    top: -30%;
+    bottom: -30%;
+    width: 2px;
+    background: var(--soft);
+    box-shadow: 0 0 8px var(--cyan);
+    animation: scan 24s ease-in-out infinite alternate;
+  }
+  @keyframes scan {
+    from { left: 0; }
+    to { left: 100%; }
+  }
+  .corner {
+    position: absolute;
+    width: calc(var(--u) * 4);
+    height: calc(var(--u) * 4);
+    border: 0 solid rgba(var(--cyan-rgb), 0.4);
+  }
+  .corner.tl { top: 2%; left: 1.5%; border-top-width: 2px; border-left-width: 2px; }
+  .corner.tr { top: 2%; right: 1.5%; border-top-width: 2px; border-right-width: 2px; }
+  .corner.bl { bottom: 2%; left: 1.5%; border-bottom-width: 2px; border-left-width: 2px; }
+  .corner.br { bottom: 2%; right: 1.5%; border-bottom-width: 2px; border-right-width: 2px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; }
+  }
+</style>
+</head>
+<body>
+<div class="aura"></div>
+
+<div class="corner tl"></div><div class="corner tr"></div>
+<div class="corner bl"></div><div class="corner br"></div>
+
+<div class="bar top">
+  <span class="live">J.A.R.V.I.S. · All systems online</span>
+  <span>Neural interface · Calm mode</span>
+  <span id="session">Session 00:00:00</span>
+</div>
+<div class="ruler"></div>
+<div class="bar bottom">
+  <span>Core sync <b id="sync">99.97%</b></span>
+  <span id="grid">Grid 7G-41 · Sector clear</span>
+  <span>Build mk-85</span>
+</div>
+
+<div class="panel" id="left">
+  <section>
+    <h3>Telemetry</h3>
+    <div class="telemetry" id="telemetry"></div>
+  </section>
+  <section>
+    <h3>Subroutine load</h3>
+    <div class="meters" id="meters"></div>
+  </section>
+  <section class="rows" id="rows-left"></section>
+</div>
+
+<div class="panel" id="right">
+  <section class="clock">
+    <h3>Local time</h3>
+    <div class="time" id="time">00:00:00</div>
+    <div class="date" id="date"></div>
+  </section>
+  <section>
+    <h3>Perimeter scan</h3>
+    <div class="scope">
+      <div class="radar" id="radar"></div>
+      <svg class="waveform" id="wave" viewBox="0 0 200 60" preserveAspectRatio="none"><polyline id="wave-line"></polyline></svg>
+    </div>
+  </section>
+  <section class="rows" id="rows-right"></section>
+</div>
+
+<script>
+/*@MIND_ENGINE@*/
+
+// Settings come from the URL:
+//   ?size=66     how big Jarvis is, in percent of the screen height
+//   &fps=30      frame rate cap, lower saves power
+//   &panels=0    hide the side panels and keep only Jarvis
+const params = new URLSearchParams(location.search);
+const num = (key, fallback) => {
+  const value = Number(params.get(key));
+  return params.has(key) && Number.isFinite(value) ? value : fallback;
+};
+const share = num("size", 66) / 100;
+const fps = num("fps", 30);
+const panels = num("panels", 1) !== 0;
+const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const rand = (a, b) => a + Math.random() * (b - a);
+const pick = (list) => list[Math.floor(Math.random() * list.length)];
+
+for (const id of ["left", "right"]) document.getElementById(id).hidden = !panels;
+
+let jarvis = null;
+const build = () => {
+  const size = Math.round(innerHeight * share);
+  document.documentElement.style.setProperty("--size", `${size}px`);
+  jarvis?.canvas.remove();
+  jarvis = mind(document, {
+    size,
+    count: 90,
+    // Keeps lines and neurons the same few pixels wide at any size.
+    thin: 170 / size,
+    pace: 0.25,
+    calm: true,
+    dream: [2500, 7000],
+    fps,
+    className: "jarvis-mind-wallpaper",
+  });
+  document.body.append(jarvis.canvas);
+};
+build();
+
+let resizing = 0;
+addEventListener("resize", () => {
+  clearTimeout(resizing);
+  resizing = setTimeout(build, 300);
+});
+// If the wallpaper app lets clicks through, a click provokes Jarvis.
+addEventListener("click", () => jarvis?.spike(5));
+
+// ---------- Panel contents ----------
+// Decoration only: the telemetry and readings are made up, the clock is real.
+
+const meters = document.getElementById("meters");
+for (let k = 0; k < 14; k++) {
+  const bar = document.createElement("i");
+  bar.style.setProperty("--t", `${rand(3, 7).toFixed(2)}s`);
+  bar.style.setProperty("--d", `-${rand(0, 4).toFixed(2)}s`);
+  meters.append(bar);
+}
+
+const radar = document.getElementById("radar");
+for (let k = 0; k < 6; k++) {
+  const blip = document.createElement("i");
+  const angle = rand(0, 360);
+  const dist = rand(15, 45);
+  blip.style.left = `${50 + dist * Math.sin((angle * Math.PI) / 180)}%`;
+  blip.style.top = `${50 - dist * Math.cos((angle * Math.PI) / 180)}%`;
+  // The sweep starts at the top and turns clockwise, so a blip lights up
+  // when the sweep reaches its angle.
+  blip.style.setProperty("--d", `${(angle / 360) * 6}s`);
+  radar.append(blip);
+}
+
+const ROW_SETS = {
+  "rows-left": [
+    ["Neural nodes", () => `${Math.round(rand(9200, 9800))}`],
+    ["Synapse rate", () => `${rand(38, 52).toFixed(1)} kHz`],
+    ["Memory index", () => `${rand(71, 74).toFixed(2)}%`],
+    ["Heuristics", () => pick(["Nominal", "Nominal", "Adaptive", "Learning"])],
+  ],
+  "rows-right": [
+    ["Arc reactor", () => `${rand(98.6, 99.9).toFixed(1)}%`],
+    ["Uplink", () => `${Math.round(rand(820, 990))} Mb/s`],
+    ["Satellites", () => `${Math.round(rand(11, 14))} locked`],
+    ["Threat level", () => pick(["Minimal", "Minimal", "Minimal", "Low"])],
+  ],
+};
+const rows = {};
+for (const [id, set] of Object.entries(ROW_SETS)) {
+  const box = document.getElementById(id);
+  rows[id] = set.map(([name, value]) => {
+    const row = document.createElement("div");
+    row.innerHTML = `<span>${name}</span><b></b>`;
+    box.append(row);
+    return { el: row.querySelector("b"), value };
+  });
+}
+const refreshRows = () => {
+  for (const list of Object.values(rows)) for (const row of list) row.el.textContent = row.value();
+};
+refreshRows();
+
+const telemetry = document.getElementById("telemetry");
+const VERBS = ["Indexing", "Parsing", "Routing", "Mapping", "Sampling", "Linking", "Caching", "Scanning", "Weighing", "Tracing"];
+const NOUNS = ["node", "cluster", "vector", "packet", "sector", "lattice", "thread", "signal"];
+const hex = () => Math.floor(rand(0, 0xffff)).toString(16).toUpperCase().padStart(4, "0");
+const addLine = () => {
+  const line = document.createElement("div");
+  line.innerHTML = `<span>0x${hex()}</span>  ${pick(VERBS)} ${pick(NOUNS)} ${Math.floor(rand(1, 99))}  <span>${rand(0, 1).toFixed(3)}</span>`;
+  telemetry.prepend(line);
+  while (telemetry.children.length > 16) telemetry.lastChild.remove();
+};
+for (let k = 0; k < 14; k++) addLine();
+
+const wave = document.getElementById("wave-line");
+let phase = 0;
+const drawWave = () => {
+  phase += 0.2;
+  const points = [];
+  for (let x = 0; x <= 200; x += 4) {
+    const y = 30 + 14 * Math.sin(x / 14 + phase) * Math.sin(x / 37 + phase / 3) + rand(-2.5, 2.5);
+    points.push(`${x},${y.toFixed(1)}`);
+  }
+  wave.setAttribute("points", points.join(" "));
+};
+drawWave();
+
+const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const pad = (n) => String(n).padStart(2, "0");
+// ISO week number, the way Swedish calendars count weeks.
+const week = (date) => {
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  return Math.ceil(((d - yearStart) / 86400000 + 1) / 7);
+};
+const loaded = Date.now();
+const tick = () => {
+  const now = new Date();
+  document.getElementById("time").textContent = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+  document.getElementById("date").textContent =
+    `${DAYS[now.getDay()]} ${now.getDate()} ${MONTHS[now.getMonth()]} ${now.getFullYear()} · Week ${week(now)}`;
+  const up = Math.floor((Date.now() - loaded) / 1000);
+  document.getElementById("session").textContent =
+    `Session ${pad(Math.floor(up / 3600))}:${pad(Math.floor(up / 60) % 60)}:${pad(up % 60)}`;
+};
+tick();
+setInterval(tick, 1000);
+
+if (!still) {
+  setInterval(addLine, 900);
+  setInterval(drawWave, 160);
+  setInterval(refreshRows, 2600);
+  setInterval(() => {
+    document.getElementById("sync").textContent = `${rand(99.9, 99.99).toFixed(2)}%`;
+  }, 3100);
+}
+</script>
+</body>
+</html>
