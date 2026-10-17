@@ -238,6 +238,16 @@
   }
   .bar > :first-child { justify-self: start; }
   .bar > :last-child { justify-self: end; }
+  /* The middle text is two halves around a dot. Both halves get the same
+     width, so the dot, which is what the eye lines up, sits exactly on the
+     center line in both the header and the footer */
+  .bar .pair {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    column-gap: 0.6em;
+  }
+  .bar .pair > :first-child { justify-self: end; }
+  .bar .pair i { font-style: normal; }
   .bar.top { top: 3.2%; }
   .bar.bottom { bottom: 3.2%; }
   .bar .live::before {
@@ -304,13 +314,13 @@
 
 <div class="bar top">
   <span class="live">J.A.R.V.I.S. · All systems online</span>
-  <span>Neural interface · Calm mode</span>
+  <span class="pair"><span>Neural interface</span><i>·</i><span>Calm mode</span></span>
   <span id="session">Session 00:00:00</span>
 </div>
 <div class="ruler"></div>
 <div class="bar bottom">
   <span>Core sync <b id="sync">99.97%</b></span>
-  <span id="grid">Grid 7G-41 · Sector clear</span>
+  <span class="pair"><span>Grid 7G-41</span><i>·</i><span>Sector clear</span></span>
   <span>Build mk-85</span>
 </div>
 
