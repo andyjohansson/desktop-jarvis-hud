@@ -223,17 +223,21 @@
   }
 
   /* ---------- Frame: header, footer, ruler and corners ---------- */
+  /* Three columns with equal outer ones, so the middle text sits exactly
+     at the center of the screen, over Jarvis, whatever the sides say */
   .bar {
     position: absolute;
     left: 4%;
     right: 4%;
-    display: flex;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
     align-items: center;
     font-size: calc(var(--u) * 1.2);
     color: var(--dim);
     opacity: 0.8;
   }
+  .bar > :first-child { justify-self: start; }
+  .bar > :last-child { justify-self: end; }
   .bar.top { top: 3.2%; }
   .bar.bottom { bottom: 3.2%; }
   .bar .live::before {
