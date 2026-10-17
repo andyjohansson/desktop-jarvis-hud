@@ -1,0 +1,107 @@
+<!doctype html>
+<!--
+  Jarvis desktop wallpaper. Generated from templates/jarvis-calm.html by build.mjs,
+  edit the template, or the engine in obsidian-jarvis-hud, not this file.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jarvis Wallpaper</title>
+<style>
+  :root {
+    --bg: #05090d;
+    --cyan-rgb: 0, 216, 255;
+  }
+  html, body {
+    margin: 0;
+    height: 100%;
+    overflow: hidden;
+    background: var(--bg);
+  }
+  /* The same faint HUD grid and top glow as the Obsidian theme, plus a
+     vignette so the edges fall away into the dark */
+  body {
+    background-image:
+      radial-gradient(ellipse 70% 50% at 50% -10%, rgba(var(--cyan-rgb), 0.07), transparent 70%),
+      radial-gradient(ellipse 120% 90% at var(--x) var(--y), transparent 40%, rgba(0, 0, 0, 0.55)),
+      linear-gradient(rgba(var(--cyan-rgb), 0.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(var(--cyan-rgb), 0.035) 1px, transparent 1px);
+    background-size: 100% 100%, 100% 100%, 44px 44px, 44px 44px;
+  }
+  /* A soft, static glow behind Jarvis. Static, so it costs nothing */
+  .aura {
+    position: absolute;
+    left: var(--x);
+    top: var(--y);
+    width: calc(var(--size) * 1.6);
+    aspect-ratio: 1;
+    translate: -50% -50%;
+    border-radius: 50%;
+    background: radial-gradient(closest-side, rgba(var(--cyan-rgb), 0.07), rgba(var(--cyan-rgb), 0.02) 60%, transparent);
+    pointer-events: none;
+  }
+  /* Absolute, not fixed: the engine skips drawing when the canvas has no
+     offsetParent, which a fixed element never has */
+  .jarvis-mind-wallpaper {
+    position: absolute;
+    left: var(--x);
+    top: var(--y);
+    width: var(--size);
+    height: var(--size);
+    translate: -50% -50%;
+    opacity: 0.85;
+  }
+</style>
+</head>
+<body>
+<div class="aura"></div>
+<script>
+/*@MIND_ENGINE@*/
+
+// Settings come from the URL, so one file covers every screen:
+//   ?x=70&y=50   where Jarvis sits, in percent of the screen
+//   &size=60     how big, in percent of the screen height
+//   &fps=30      frame rate cap, lower saves power
+const params = new URLSearchParams(location.search);
+const num = (key, fallback) => {
+  const value = Number(params.get(key));
+  return params.has(key) && Number.isFinite(value) ? value : fallback;
+};
+const x = num("x", 50);
+const y = num("y", 50);
+const share = num("size", 62) / 100;
+const fps = num("fps", 30);
+
+let jarvis = null;
+const build = () => {
+  const size = Math.round(innerHeight * share);
+  document.documentElement.style.setProperty("--x", `${x}%`);
+  document.documentElement.style.setProperty("--y", `${y}%`);
+  document.documentElement.style.setProperty("--size", `${size}px`);
+  jarvis?.canvas.remove();
+  jarvis = mind(document, {
+    size,
+    count: 90,
+    // Keeps lines and neurons the same few pixels wide at any size.
+    thin: 170 / size,
+    pace: 0.25,
+    calm: true,
+    dream: [2500, 7000],
+    fps,
+    className: "jarvis-mind-wallpaper",
+  });
+  document.body.append(jarvis.canvas);
+};
+build();
+
+let resizing = 0;
+addEventListener("resize", () => {
+  clearTimeout(resizing);
+  resizing = setTimeout(build, 300);
+});
+// If the wallpaper app lets clicks through, a click provokes Jarvis.
+addEventListener("click", () => jarvis?.spike(5));
+</script>
+</body>
+</html>
